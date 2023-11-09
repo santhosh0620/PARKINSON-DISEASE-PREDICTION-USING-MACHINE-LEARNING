@@ -1,0 +1,222 @@
+App.py (Flask Server) 
+import os
+from flask import * import 
+pandas as pd import 
+chart_studio import 
+chart_studio.tools as tls import 
+chart_studio.plotly as py import 
+plotly.express as px
+from pycaret.classification import * from 
+werkzeug.utils import secure_filename from 
+dotenv import load_dotenv load_dotenv()
+46
+tls.set_credentials_file(os.getenv('USERID'),os.getenv('APIKEY'))
+#Changing the upload directory
+UPLOAD_FOLDER = 'D:\\Study\\Winter 2020 -
+2021\\Data
+Mining\\Project \\Review 
+3\\uploads'
+app = Flask(__name__,static_folder= './frontend', 
+template_folder= '
+./frontend/views')
+app.config[ 'UPLOAD_FOLDER'] = 
+UPLOAD_FOLDER
+def 
+computePrediction():
+global lengthD,acc1,acc2,acc3,plot1,plot2,plot3
+DM_loaded = load_model('model_data_mining') data 
+= pd.read_csv('./uploads/' + fileName) predictions = 
+predict_model(DM_loaded, data=data)
+lengthD = len(predictions) 
+acc1 = round((predictions['Score'].mean())*100,2) acc2 = 
+round(predictions[predictions['Label']==0]['Score'].mean( )*100,2) 
+acc3 = round(predictions[predictions['Label']==1]['Score'].mean( )*100,2) 
+# Graph 
+1 
+'No. of
+=False))
+male_count = predictions[predictions['gender']==1] male_info = 
+pd.DataFrame(male_count['Label'].value_counts().rese t_index().values, 
+columns=["Label", "No. of Data"]) 
+p2=px.pie(male_info,names=male_info['Label'],values=male_info['N o. of 
+Data'],title="Male info of Parkinson Disease") plot2 = 
+tls.get_embed(py.plot(p2,filename='Male info of Parkinso n
+Disease',auto_open=False)) 
+label_info = pd.DataFrame(predictions['Label'].value_counts().re
+set_index().values, columns=["Label", "No. of Data"]) p1 =
+fo[ 
+to_open
+px.pie(label_info,names=label_info['Label'],values=label_in
+Data'],title="Label of Parkinson Disease") plot1 =
+tls.get_embed(py.plot(p1,filename='Parkinson Disease',au
+# Graph 2
+47
+# Graph 3 female_count = predictions[predictions['gender']==0] 
+female_info = pd.DataFrame(female_count['Label'].value_counts(). 
+reset_index().values, columns=["Label", "No. of Data"])
+p3=px.pie(female_info,names=female_info['Label'],values=female_i 
+nfo['No. of Data'],title="Female info of Parkinson Disease") plot3 = 
+tls.get_embed(py.plot(p3,filename='Female info of Parkin son 
+Disease',auto_open=False)) 
+predictions.to_csv('out.csv', index=False) 
+var = '<iframe id="igraph" scrolling="no" style="border:none;" seam less="seamless" 
+src="https://plotly.com/~santhosh_d/1.embed" height= "525"
+width="100%"></iframe>' 
+@app.route('/', methods = ['GET', 'POST']) def 
+home():
+global fileName if 
+request.method == 'POST':
+file = request.files['csv'] fileName = 
+secure_filename(file.filename)
+))
+return render_template('upload.html',lengthD = lengthD, acc1 
+=acc1,acc2=acc2,acc3=acc3,plot1=plot1,plot2=plot2,plot3=plot3) else: 
+return render_template('index.html') 
+# Upload page
+@app.route('/upload', methods = ['GET', 'POST'])
+def upload():
+if request.method == 'POST':
+else:
+# Download Action
+@app.route("/download") def 
+download():
+file.save(os.path.join(app.config['UPLOAD_FOLDER'], fileName
+computePrediction()
+return render_template('upload.html',var=var)
+return render_template('upload.html')
+return send_from_directory(directory=r'D:\Study\Winter 2020 - 20
+Mining\Project\Review 3', filename='out.csv',as_attachment=T rue)
+48
+21\Data
+if __name__ == '__main__':
+app.run()
+Index.html
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <meta
+ name="description"
+ content="Parkinson Disease Prediction and Classification."
+ />
+ <title>Parkinson Disease | Data Mining</title>
+ <script
+ src="https://kit.fontawesome.com/f3a06c157c.js"
+ crossorigin="anonymous"
+ ></script>
+ <link rel="stylesheet" href="../css/style.css" />
+ <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/style.css') }}"
+>
+ </head>
+ <body>
+ <header>
+ <nav id="navbar">
+ <div class="container">
+ <h1 class="logo"><a href="index.html">Parkinson Disease</a></h1>
+ <ul>
+ <li><a class="current" href="/">Home</a></li>
+ <li><a href="upload">Upload</a></li>
+ </ul>
+ </div>
+ </nav>
+ <div id="showcase">
+49
+ <div class="container">
+ <div class="showcase-content">
+ <h1>
+ <span class="text-highlight">Parkinson</span> Disease
+ Classification and Prediction
+ </h1>
+ <p class="text-big">
+ Parkinson's disease is a progressive nervous system disorder that
+ affects movement. Symptoms start gradually, sometimes starting
+ with a barely noticeable tremor in just one hand. Tremors are
+ common, but the disorder also commonly causes stiffness or slowing
+ of movement.
+ </p>
+ <section id="contact-form" class="py-3">
+ <form action="/" method="POST" enctype=multipart/form-data >
+ <div class="form-group">
+ <input type="file" id="csv" name="csv" accept=".csv" />
+ </div>
+ <button type="submit" class="btn">Submit</button>
+ </form>
+ </section>
+ </div>
+ </div>
+ </div>
+ </header>
+ <div class="clr"></div>
+ <footer id="main-footer">
+ <p>
+ Parkinson Disease Prediction & Classification &copy 2021, All Rights
+ Reserved
+ </p>
+ </footer>
+ </body>
+</html>
+Upload.html
+<!DOCTYPE html>
+<html lang="en">
+50
+ <head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <meta
+ name="description"
+ content="Parkinson Disease Prediction and Classification."
+ />
+ <title>Parkinson Disease | Data Mining</title>
+ <script
+ src="https://kit.fontawesome.com/f3a06c157c.js"
+ crossorigin="anonymous"
+ ></script>
+ <link rel="stylesheet" href="../css/style.css" />
+ <link
+ rel="stylesheet"
+ type="text/css"
+ href="{{ url_for('static',filename='css/style.css') }}"
+ />
+ </head>
+ <body>
+ <header>
+ <nav id="navbar">
+ <div class="container">
+ <h1 class="logo"><a href="/">Parkinson Disease</a></h1>
+ <ul>
+ <li><a href="index.html">Home</a></li>
+ <li><a class="current" href="upload">Upload</a></li>
+ </ul>
+ </div>
+ </nav>
+ </header>
+ <section id="about-info" class="bg-light py-3">
+ <div class="container">
+ <h1 class="l-heading">
+ <span class="text-highlight">Results</span>
+ </h1>
+ <div class="showcase-content">
+51
+ <p class="text-big">No of Records in the CSV : {{lengthD}}</p>
+ <p class="text-big">Overall Accuracy : {{acc1}}%</p>
+ <p class="text-big">Accuracy on Classification 0 : {{acc2}}%</p>
+ <p class="text-big">Accuracy on Classification 1 : {{acc3}}%</p>
+ </div>
+ <div>{{plot1|safe}}</div>
+ <div>{{plot2|safe}}</div>
+ <div>{{plot3|safe}}</div>
+ <form action="/download">
+ <button type="submit" class="btn">Download Predicted File</button>
+ </form>
+ </div>
+ </section>
+ <div class="clr"></div>
+ <footer id="main-footer">
+ <p>
+ Parkinson Disease Prediction & Classification &copy 2021, All Rights
+ Reserved
+ </p>
+ </footer>
+ </body>
+</html>
